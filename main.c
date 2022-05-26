@@ -3,172 +3,115 @@
 #include <string.h>
 #include <inttypes.h>
 
-typedef struct head
+typedef struct info
 {   unsigned int varsta;
     unsigned int len; 
-} head;
+} info;
 
 typedef struct data_structure
-{   head *header;
+{   info *header;
     void *data; 
 } data_structure;
 
 // adaugare
-int add_last(void **arr, int *len, data_structure *data)
-{   // alocare vector ARR fix cu cat avem nevoie
-    if (*arr == NULL)
-        *arr = malloc(sizeof(head) + data->header->len); 
+int add_last(void **baza, int *len, data_structure *data)
+{   // alocare vector baza fix cu cat avem nevoie
+    if (*baza == NULL)
+        *baza = malloc(sizeof(info) + data->header->len); 
     else
-        *arr = realloc(*arr, *len + sizeof(head) + data->header->len);
+        *baza = realloc(*baza, *len + sizeof(info) + data->header->len);
      
     // salvare adresa inceput
-    void *pointer = *arr;
+    void *pointer = *baza;
     // adaugare spre final
-    *arr = *arr + *len;
+    *baza = *baza + *len;
     // copiere header
-    memcpy(*arr, data->header, sizeof(head));
-    (*arr) = ((char *)*arr + 4); // trecere catre zona len
-    size_t size = *(int *)(*arr); // extragere len
-    (*arr) = ((int *)*arr + 1); // ajungere zona data
-    memcpy(*arr, data->data, size); // copiere bytes din data
-    *arr = pointer; // adresa de start
+    memcpy(*baza, data->header, sizeof(info));
+    (*baza) = ((char *)*baza + 4); // trecere catre zona len
+    size_t size = *(int *)(*baza); // extragere len
+    (*baza) = ((int *)*baza + 1); // ajungere zona data
+    memcpy(*baza, data->data, size); // copiere bytes din data
+    *baza = pointer; // adresa de start
 
     return 0;
 }
 
 // functie delete
-int delete_at(void **arr, int *len, int index)
+int delete_at(void **baza, int *len, int index)
 {   // salvare adresa initiala
-    void *pointer = *arr;
+    void *pointer = *baza;
     // index element de sters
     int delete = 0;
     
     // parcurgere pana la index
-    int lungime_data = *(int *)(*arr + 4);
+    int lungime_data = *(int *)(*baza + 4);
     int suma = 0;
     while (delete != index) {
         // aflam cat din lungimea vectorului am parcurs
-        suma = suma + sizeof(head) + lungime_data;
+        suma = suma + sizeof(info) + lungime_data;
         // trecem la urmatorul element
-        *arr = *arr + sizeof(head) + lungime_data;
+        *baza = *baza + sizeof(info) + lungime_data;
         // aflam cat are zona data a urmatorului element
-        lungime_data = *(int *)(*arr + 4);
+        lungime_data = *(int *)(*baza + 4);
         // incrementam indexul delete
         delete++;
     }
      
     // modificare date
-    int pas = sizeof(head) + lungime_data;
+    int pas = sizeof(info) + lungime_data;
     // adresa de dupa locul ocupat de element
     suma = suma + pas;
     // zona ramasa dupa stergerea elementului
     size_t size = *len - suma;
     // copiere bytes din zona de dupa element in zona elementului 
-    memcpy(*arr, *arr + pas, size); // un fel de suprascriere a datelor
-    *arr = pointer; // adresa initiala pointer
-    *arr = realloc(*arr, *len - pas); // realocare cu dimensiune - element sters
+    memcpy(*baza, *baza + pas, size); // un fel de suprascriere a datelor
+    *baza = pointer; // adresa initiala pointer
+    *baza = realloc(*baza, *len - pas); // realocare cu dimensiune - element sters
     *len = *len - pas;
 
     return 0;
 }
 
 
-void write_data(void **arr,data_structure *elem, int *len) {    
-    // nu o mai comentez ca e similara cu cea de mai sus
-    int type;
-    scanf("%d", &type);
-    elem->header = (head *)malloc(sizeof(head));
-    if (type == 1)
-    elem->header->type = '1';
-    if (type == 2)
-    elem->header->type = '2';
-    if (type == 3)
-    elem->header->type = '3';
+void write_data(void **baza,data_structure *elem, int *len) {    
+    
+    unsigned int varsta;
+    scanf("%d", &varsta);
+    elem->header = (info *)malloc(sizeof(info));
+    elem->header->varsta = varsta;
 
     char *sir = malloc(256 * sizeof(char));
     char *sir2 = malloc(256 * sizeof(char));
 
-    if (type == 1)
-    {   scanf("%s", sir);
-        int8_t bancnota1;
-        int8_t bancnota2;
-        scanf("%" SCNd8 " %" SCNd8 "", &bancnota1, &bancnota2);
-        scanf("%s", sir2);
+    scanf("%s", sir);
+    int8_t bancnota1;
+    int8_t bancnota2;
+    scanf("%" SCNd8 " %" SCNd8 "", &bancnota1, &bancnota2);
+    scanf("%s", sir2);
 
-        size_t size1 = strlen(sir) + 1;
-        size_t size2 = strlen(sir2) + 1;
-        size_t bancnota1_size = sizeof(int8_t);
-        size_t bancnota2_size = sizeof(int8_t);
-        size_t total_size = size1 + size2 + bancnota1_size + bancnota2_size;
-        elem->header->len = (int)total_size;
+    size_t size1 = strlen(sir) + 1;
+    size_t size2 = strlen(sir2) + 1;
+    size_t bancnota1_size = sizeof(int8_t);
+    size_t bancnota2_size = sizeof(int8_t);
+    size_t total_size = size1 + size2 + bancnota1_size + bancnota2_size;
+    elem->header->len = (int)total_size;
 
-        elem->data = malloc(total_size);
-        memcpy(elem->data, sir, size1);
-        elem->data = ((char *)elem->data + size1);
-        memcpy(elem->data, &bancnota1, bancnota1_size);
-        elem->data = ((int8_t *)elem->data + 1);
-        memcpy(elem->data, &bancnota2, bancnota2_size);
-        elem->data = ((int8_t *)elem->data + 1);
-        memcpy(elem->data, sir2, size2);
-        elem->data = ((char *)elem->data + size2);
-        elem->data = (char *)elem->data - total_size;
-    }
-
-    if (type == 2)
-    {   scanf("%s", sir);
-        int16_t bancnota1;
-        int32_t bancnota2;
-        scanf("%" SCNd16 " %" SCNd32 "", &bancnota1, &bancnota2);
-        scanf("%s", sir2); 
-
-        size_t size1 = strlen(sir) + 1;
-        size_t size2 = strlen(sir2) + 1;
-        size_t bancnota1_size = sizeof(int16_t);
-        size_t bancnota2_size = sizeof(int32_t);
-        size_t total_size = size1 + size2 + bancnota1_size + bancnota2_size;
-        elem->header->len = (int)total_size;
-
-        elem->data = malloc(total_size);
-        memcpy(elem->data, sir, size1);
-        elem->data = ((char *)elem->data + size1);
-        memcpy(elem->data, &bancnota1, bancnota1_size);
-        elem->data = ((int16_t *)elem->data + 1);
-        memcpy(elem->data, &bancnota2, bancnota2_size);
-        elem->data = ((int32_t *)elem->data + 1);
-        memcpy(elem->data, sir2, size2);
-        elem->data = ((char *)elem->data + size2);
-        elem->data = (char *)elem->data - total_size;
-    }
-
-    if (type == 3)
-    {   scanf("%s", sir); 
-        int bancnota1;
-        int bancnota2;
-        scanf("%d%d", &bancnota1, &bancnota2);
-        scanf("%s", sir2);
-
-        size_t size1 = strlen(sir) + 1;
-        size_t size2 = strlen(sir2) + 1;
-        size_t bani = sizeof(int);
-        size_t total_size = size1 + size2 + 2 * bani;
-        elem->header->len = (int)total_size;
-
-        elem->data = malloc(total_size);
-        memcpy(elem->data, sir, size1);
-        elem->data = ((char *)elem->data + size1);
-        memcpy(elem->data, &bancnota1, bani);
-        elem->data = ((int32_t *)elem->data + 1);
-        memcpy(elem->data, &bancnota2, bani);
-        elem->data = ((int32_t *)elem->data + 1);
-        memcpy(elem->data, sir2, size2);
-        elem->data = ((char *)elem->data + size2);
-        elem->data = (char *)elem->data - total_size;
-    }
+    elem->data = malloc(total_size);
+    memcpy(elem->data, sir, size1);
+    elem->data = ((char *)elem->data + size1);
+    memcpy(elem->data, &bancnota1, bancnota1_size);
+    elem->data = ((int8_t *)elem->data + 1);
+    memcpy(elem->data, &bancnota2, bancnota2_size);
+    elem->data = ((int8_t *)elem->data + 1);
+    memcpy(elem->data, sir2, size2);
+    elem->data = ((char *)elem->data + size2);
+    elem->data = (char *)elem->data - total_size;
     
-    if(add_last(arr, len, elem) != 0)
+    
+    if(add_last(baza, len, elem) != 0)
     exit(-1);
 
-    *len = *len + elem->header->len + (int)sizeof(head);
+    *len = *len + elem->header->len + (int)sizeof(info);
 
     free(elem->data);
     free(sir);
@@ -178,74 +121,46 @@ void write_data(void **arr,data_structure *elem, int *len) {
 }
 
 // functia de printare
-void print(void *arr, int len) {
+void print(void *baza, int len) {
     // daca vectorul are lungimea 0 nu mai afisam nimic
     if (len == 0)
     return;
 
-    void *pointer = arr;
+    void *pointer = baza;
     int ok = 0; // variabila contor
     int lungime_finala = 0;
     int add = 0;
     
     // extragem tipul si dupa afisam informatia pana cand ajungem la len
     while (ok == 0) {
-    printf("Tipul %c\n", *(char *)(arr));
-    char tip = *(unsigned char *)(arr);
+    printf("Varsta %d\n", *(int *)(baza));
     
-    // afisare pe cazuri
-    if (tip == '1') {
-        int lungime = strlen((char *)(arr + 8)) + 1;
-        int lungime2 = strlen((char *)(arr + 8 + lungime + 2)) + 1;
-        // facem cast la tipul de informatie pe care vrem sa il citim, dupa sarim peste x pasi
-        
-        // aici e arr + sizeof(head) = 8 + lungime la sir1 + 2 bytes ( 2 bancnote de 1 byte)
-        printf("%s pentru %s\n", (char *)(arr + 8), (char *)(arr + 8 + lungime + 2)); 
-        // prima bancnota se afla la arr + sizeof(head) = 8 + lungime primul sir
-        printf("%" PRId8 "\n", *(int8_t *)(arr + 8 + lungime));
-        // a doua se afla dupa prima + 1 byte
-        printf("%" PRId8 "\n", *(int8_t *)(arr + 9 + lungime));
-        printf("\n");
-        
-        // crestem add cu dimensiunea unui struct de element
-        lungime_finala = 8 + 2 + lungime + lungime2;
-        add = add + lungime_finala;
-    }
+
+    int lungime = strlen((char *)(baza + 8)) + 1;
+    int lungime2 = strlen((char *)(baza + 8 + lungime + 2)) + 1;
+    // facem cast la tipul de informatie pe care vrem sa il citim, dupa sarim peste x pasi
     
-    // analog si pentru celelalte 2 tipuri
-    if (tip == '2') {
-        int lungime = strlen((char *)(arr + 8)) + 1;
-        int lungime2 = strlen((char *)(arr + 8 + lungime + 6)) + 1;
-        printf("%s pentru %s\n", (char *)(arr + 8), (char *)(arr + 8 + lungime + 6));
-        printf("%" PRId16 "\n", *(int16_t *)(arr + 8 + lungime));
-        printf("%" PRId32 "\n", *(int32_t *)(arr + 10 + lungime));
-        printf("\n");
-
-        lungime_finala = 8 + 6 + lungime + lungime2;
-        add = add + lungime_finala;
-    }
-
-    if (tip == '3') {
-        int lungime = strlen((char *)(arr + 8)) + 1;
-        int lungime2 = strlen((char *)(arr + 8 + lungime + 8)) + 1;
-        printf("%s pentru %s\n", (char *)(arr + 8), (char *)(arr + 8 + lungime + 8));
-        printf("%"PRId32"\n", *(int32_t *)(arr + 8 + lungime));
-        printf("%"PRId32"\n", *(int32_t *)(arr + 12 + lungime));
-        printf("\n");
-
-        lungime_finala = 8 + 8 + lungime + lungime2;
-        add = add + lungime_finala;
-    }
+    // aici e baza + sizeof(head) = 8 + lungime la sir1 + 2 bytes ( 2 bancnote de 1 byte)
+    printf("%s pentru %s\n", (char *)(baza + 8), (char *)(baza + 8 + lungime + 2)); 
+    // prima bancnota se afla la baza + sizeof(head) = 8 + lungime primul sir
+    printf("%" PRId8 "\n", *(int8_t *)(baza + 8 + lungime));
+    // a doua se afla dupa prima + 1 byte
+    printf("%" PRId8 "\n", *(int8_t *)(baza + 9 + lungime));
+    printf("\n");
+    
+    // crestem add cu dimensiunea unui struct de element
+    lungime_finala = 8 + 2 + lungime + lungime2;
+    add = add + lungime_finala;
     
     // verificare daca am ajuns pana la finalul vectorului
     if (add < len)
-        arr = arr + lungime_finala;
+        baza = baza + lungime_finala;
     else
         ok = 1; // iesire daca este cazul
 
     }
 
-    arr = pointer; // arr ia adresa intiala pentru alta posibila afisare
+    baza = pointer; // baza ia adresa intiala pentru alta posibila afisare
 }
 
 // functie find
@@ -260,7 +175,7 @@ void find(void *data_block, int len, int index) {
     int lungime_data = *(int *)(data_block + 4);
     while (find != index)
     {
-        data_block = data_block + sizeof(head) + lungime_data;
+        data_block = data_block + sizeof(info) + lungime_data;
         lungime_data = *(int *)(data_block + 4);
         find++;
     }
@@ -299,8 +214,8 @@ void find(void *data_block, int len, int index) {
 
 
 int main() {
-    
-    void *arr = NULL;
+    // 
+    void *baza = NULL;
     int len = 0;
     int lungime_vector = 0;
     
@@ -308,8 +223,9 @@ int main() {
     char buffer[256];
     // rulare pana la exit
     int run = 1;
+    
 
-
+    
     do
     {   // scanare buffer
         scanf("%s", buffer);
@@ -318,14 +234,14 @@ int main() {
         if(strcmp(buffer, "insert") == 0) {
             data_structure *elem = (data_structure *)malloc(sizeof(data_structure));
              // dupa ce scrie aloca in vectorul generic apeland o subfunctie din subprogram
-            write_data(&arr, elem, &len);
+            write_data(&baza, elem, &len);
             // crestem lungimea vectorului ( nu ca nr de bytes, ca nr de elem)
             lungime_vector++;
         }
 
         if(strcmp(buffer, "print") == 0) {
             // apelam functia de printare
-            print(arr,len);
+            print(baza,len);
         }
 
         if(strcmp(buffer, "exit") == 0) {
@@ -337,7 +253,7 @@ int main() {
             // scanam un index si apelam functia de gasire
             int index;
             scanf("%d", &index);
-            find(arr, len, index);
+            find(baza, len, index);
         }
 
          if (strcmp(buffer, "delete_at") == 0) {
@@ -345,7 +261,7 @@ int main() {
             int index;
             scanf("%d", &index);
             // daca nu a mers stergerea iesim din program cu exit status -2
-            if (delete_at(&arr, &len, index) != 0)
+            if (delete_at(&baza, &len, index) != 0)
             exit(-2);
             // scadem lungimea vectorului
             lungime_vector--;
@@ -354,7 +270,7 @@ int main() {
     } while ( run == 1 );
     
     // free la vectorul generic
-    free(arr);
+    free(baza);
 
 
 
