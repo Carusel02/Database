@@ -74,37 +74,44 @@ int delete_at(void **baza, int *len, int index)
 
 
 void write_data(void **baza,data_structure *elem, int *len) {    
-    
+    printf("Introduceti varsta:\n");
     unsigned int varsta;
     scanf("%d", &varsta);
     elem->header = (info *)malloc(sizeof(info));
     elem->header->varsta = varsta;
 
-    char *sir = malloc(256 * sizeof(char));
-    char *sir2 = malloc(256 * sizeof(char));
+    char *nume = malloc(256 * sizeof(char));
+    char *parola = malloc(256 * sizeof(char));
+    
+    printf("Introduceti nume:\n");
+    scanf("%s", nume);
+    printf("Introduceti parola:\n");
+    scanf("%s", parola);
+    
+    printf("Introduceti cnp:\n");
+    int64_t cnp;
+    scanf("%"SCNd64"", &cnp);
+    
+    printf("Introduceti vot:\n");
+    int8_t vot;
+    scanf("%"SCNd8"", &vot);
 
-    scanf("%s", sir);
-    int8_t bancnota1;
-    int8_t bancnota2;
-    scanf("%" SCNd8 " %" SCNd8 "", &bancnota1, &bancnota2);
-    scanf("%s", sir2);
-
-    size_t size1 = strlen(sir) + 1;
-    size_t size2 = strlen(sir2) + 1;
-    size_t bancnota1_size = sizeof(int8_t);
-    size_t bancnota2_size = sizeof(int8_t);
-    size_t total_size = size1 + size2 + bancnota1_size + bancnota2_size;
+    size_t size_nume = strlen(nume) + 1;
+    size_t size_parola = strlen(parola) + 1;
+    size_t size_cnp = sizeof(int64_t);
+    size_t size_vot = sizeof(int8_t);
+    size_t total_size = size_nume + size_parola + size_vot + size_cnp;
     elem->header->len = (int)total_size;
 
     elem->data = malloc(total_size);
-    memcpy(elem->data, sir, size1);
-    elem->data = ((char *)elem->data + size1);
-    memcpy(elem->data, &bancnota1, bancnota1_size);
+    memcpy(elem->data, nume, size_nume);
+    elem->data = ((char *)elem->data + size_nume);
+    memcpy(elem->data, parola, size_parola);
+    elem->data = ((char *)elem->data + size_parola);
+    memcpy(elem->data, &cnp, size_cnp);
+    elem->data = ((int64_t *)elem->data + 1);
+    memcpy(elem->data, &vot, size_vot);
     elem->data = ((int8_t *)elem->data + 1);
-    memcpy(elem->data, &bancnota2, bancnota2_size);
-    elem->data = ((int8_t *)elem->data + 1);
-    memcpy(elem->data, sir2, size2);
-    elem->data = ((char *)elem->data + size2);
     elem->data = (char *)elem->data - total_size;
     
     
@@ -114,8 +121,8 @@ void write_data(void **baza,data_structure *elem, int *len) {
     *len = *len + elem->header->len + (int)sizeof(info);
 
     free(elem->data);
-    free(sir);
-    free(sir2);
+    free(nume);
+    free(parola);
     free(elem->header);
     free(elem);
 }
@@ -136,20 +143,20 @@ void print(void *baza, int len) {
     printf("Varsta %d\n", *(int *)(baza));
     
 
-    int lungime = strlen((char *)(baza + 8)) + 1;
-    int lungime2 = strlen((char *)(baza + 8 + lungime + 2)) + 1;
+    int lungime_nume = strlen((char *)(baza + 8)) + 1;
+    int lungime_parola = strlen((char *)(baza + 8 + lungime_nume)) + 1;
     // facem cast la tipul de informatie pe care vrem sa il citim, dupa sarim peste x pasi
     
     // aici e baza + sizeof(head) = 8 + lungime la sir1 + 2 bytes ( 2 bancnote de 1 byte)
-    printf("%s pentru %s\n", (char *)(baza + 8), (char *)(baza + 8 + lungime + 2)); 
+    printf("Nume : %s Parola : %s\n", (char *)(baza + 8), (char *)(baza + 8 + lungime_nume)); 
     // prima bancnota se afla la baza + sizeof(head) = 8 + lungime primul sir
-    printf("%" PRId8 "\n", *(int8_t *)(baza + 8 + lungime));
+    printf("Cnp :%" PRId64 "\n", *(int64_t *)(baza + 8 + lungime_nume + lungime_parola));
     // a doua se afla dupa prima + 1 byte
-    printf("%" PRId8 "\n", *(int8_t *)(baza + 9 + lungime));
+    printf("Vot :%" PRId8 "\n", *(int8_t *)(baza + 16 + lungime_nume + lungime_parola));
     printf("\n");
     
     // crestem add cu dimensiunea unui struct de element
-    lungime_finala = 8 + 2 + lungime + lungime2;
+    lungime_finala = 8 + 9 + lungime_nume + lungime_parola;
     add = add + lungime_finala;
     
     // verificare daca am ajuns pana la finalul vectorului
@@ -162,6 +169,51 @@ void print(void *baza, int len) {
 
     baza = pointer; // baza ia adresa intiala pentru alta posibila afisare
 }
+
+void print_secret(void *baza, int len) {
+    // daca vectorul are lungimea 0 nu mai afisam nimic
+    if (len == 0)
+    return;
+
+    void *pointer = baza;
+    int ok = 0; // variabila contor
+    int lungime_finala = 0;
+    int add = 0;
+    
+    // extragem tipul si dupa afisam informatia pana cand ajungem la len
+    while (ok == 0) {
+    printf("Varsta %d\n", *(int *)(baza));
+    
+
+    int lungime_nume = strlen((char *)(baza + 8)) + 1;
+    int lungime_parola = strlen((char *)(baza + 8 + lungime_nume)) + 1;
+    
+
+    printf("Nume : %s Parola : ", (char *)(baza + 8)); 
+    for(int i = 0 ; i < lungime_parola - 1 ; i++) {
+        printf("*");
+    }
+    printf("\n");
+
+    printf("Cnp : [hidden]\n");
+
+    printf("Vot : [hidden]\n");
+    
+    // crestem add cu dimensiunea unui struct de element
+    lungime_finala = 8 + 9 + lungime_nume + lungime_parola;
+    add = add + lungime_finala;
+    
+    // verificare daca am ajuns pana la finalul vectorului
+    if (add < len)
+        baza = baza + lungime_finala;
+    else
+        ok = 1; // iesire daca este cazul
+
+    }
+
+    baza = pointer; // baza ia adresa intiala pentru alta posibila afisare
+}
+
 
 // functie find
 void find(void *data_block, int len, int index) {
@@ -181,32 +233,14 @@ void find(void *data_block, int len, int index) {
     }
     
     // dupa ce am gasit indexul afisam ( similar cu functia print )
-    printf("Tipul %c\n", *(char *)(data_block));
-    char tip = *(unsigned char *)(data_block);
+    printf("Varsta %d\n", *(int *)(data_block));
 
-    if (tip == '1') {
-        int lungime = strlen((char *)(data_block + 8)) + 1;
-        printf("%s pentru %s\n", (char *)(data_block + 8), (char *)(data_block + 8 + lungime + 2));
-        printf("%" PRId8 "\n", *(int8_t *)(data_block + 8 + lungime));
-        printf("%" PRId8 "\n", *(int8_t *)(data_block + 9 + lungime));
-        printf("\n");
-    }
 
-    if (tip == '2') {
-        int lungime = strlen((char *)(data_block + 8)) + 1;
-        printf("%s pentru %s\n", (char *)(data_block + 8), (char *)(data_block + 8 + lungime + 6));
-        printf("%" PRId16 "\n", *(int16_t *)(data_block + 8 + lungime));
-        printf("%" PRId32 "\n", *(int32_t *)(data_block + 10 + lungime));
-        printf("\n");
-    }
-
-    if (tip == '3') {
-        int lungime = strlen((char *)(data_block + 8)) + 1;
-        printf("%s pentru %s\n", (char *)(data_block + 8), (char *)(data_block + 8 + lungime + 8));
-        printf("%"PRId32"\n", *(int32_t *)(data_block + 8 + lungime));
-        printf("%"PRId32"\n", *(int32_t *)(data_block + 12 + lungime));
-        printf("\n");
-    }
+    int lungime = strlen((char *)(data_block + 8)) + 1;
+    printf("%s pentru %s\n", (char *)(data_block + 8), (char *)(data_block + 8 + lungime + 2));
+    printf("%" PRId8 "\n", *(int8_t *)(data_block + 8 + lungime));
+    printf("%" PRId8 "\n", *(int8_t *)(data_block + 9 + lungime));
+    printf("\n");
 
     data_block = pointer; // returnare adresa initiala
 }
@@ -242,6 +276,11 @@ int main() {
         if(strcmp(buffer, "print") == 0) {
             // apelam functia de printare
             print(baza,len);
+        }
+
+        if(strcmp(buffer, "confidential") == 0) {
+            // apelam functia de printare
+            print_secret(baza,len);
         }
 
         if(strcmp(buffer, "exit") == 0) {
