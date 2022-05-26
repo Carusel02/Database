@@ -14,7 +14,7 @@ typedef struct data_structure
 } data_structure;
 
 int main() {
-
+    
 
 
 
