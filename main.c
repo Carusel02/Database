@@ -13,47 +13,37 @@ typedef struct data_structure
     void *data; 
 } data_structure;
 
-// adaugare
 int add_last(void **baza, int *len, data_structure *data)
-{   // alocare vector baza fix cu cat avem nevoie
-    if (*baza == NULL)
+{   if (*baza == NULL)
         *baza = malloc(sizeof(info) + data->header->len); 
     else
         *baza = realloc(*baza, *len + sizeof(info) + data->header->len);
      
-    // salvare adresa inceput
     void *pointer = *baza;
-    // adaugare spre final
     *baza = *baza + *len;
-    // copiere header
+    
     memcpy(*baza, data->header, sizeof(info));
-    (*baza) = ((char *)*baza + 4); // trecere catre zona len
-    size_t size = *(int *)(*baza); // extragere len
-    (*baza) = ((int *)*baza + 1); // ajungere zona data
-    memcpy(*baza, data->data, size); // copiere bytes din data
-    *baza = pointer; // adresa de start
+    (*baza) = ((char *)*baza + 4); 
+    size_t size = *(int *)(*baza); 
+    (*baza) = ((int *)*baza + 1);
+    memcpy(*baza, data->data, size);
+    *baza = pointer;
 
     return 0;
 }
 
 // functie delete
-int delete_at(void **baza, int *len, int index)
-{   // salvare adresa initiala
-    void *pointer = *baza;
-    // index element de sters
+int delete_a_user(void **baza, int *len, int index)
+{   void *pointer = *baza;
+   
     int delete = 0;
     
-    // parcurgere pana la index
     int lungime_data = *(int *)(*baza + 4);
     int suma = 0;
     while (delete != index) {
-        // aflam cat din lungimea vectorului am parcurs
         suma = suma + sizeof(info) + lungime_data;
-        // trecem la urmatorul element
         *baza = *baza + sizeof(info) + lungime_data;
-        // aflam cat are zona data a urmatorului element
         lungime_data = *(int *)(*baza + 4);
-        // incrementam indexul delete
         delete++;
     }
      
@@ -73,7 +63,7 @@ int delete_at(void **baza, int *len, int index)
 }
 
 
-void write_data(void **baza,data_structure *elem, int *len) {    
+void add_a_user(void **baza,data_structure *elem, int *len) {    
     printf("Introduceti varsta:\n");
     unsigned int varsta;
     scanf("%d", &varsta);
@@ -83,16 +73,15 @@ void write_data(void **baza,data_structure *elem, int *len) {
     char *nume = malloc(256 * sizeof(char));
     char *parola = malloc(256 * sizeof(char));
     
-    printf("Introduceti nume:\n");
+    printf("Introduceti nume si parola:\n");
     scanf("%s", nume);
-    printf("Introduceti parola:\n");
     scanf("%s", parola);
     
     printf("Introduceti cnp:\n");
     int64_t cnp;
     scanf("%"SCNd64"", &cnp);
     
-    printf("Introduceti vot:\n");
+    printf("Introduceti vot: [partid x = 0 partid y = 1]\n");
     int8_t vot;
     scanf("%"SCNd8"", &vot);
 
@@ -129,7 +118,6 @@ void write_data(void **baza,data_structure *elem, int *len) {
 
 // functia de printare
 void print(void *baza, int len) {
-    // daca vectorul are lungimea 0 nu mai afisam nimic
     if (len == 0)
     return;
 
@@ -138,49 +126,40 @@ void print(void *baza, int len) {
     int lungime_finala = 0;
     int add = 0;
     
-    // extragem tipul si dupa afisam informatia pana cand ajungem la len
     while (ok == 0) {
     printf("Varsta %d\n", *(int *)(baza));
     
 
     int lungime_nume = strlen((char *)(baza + 8)) + 1;
     int lungime_parola = strlen((char *)(baza + 8 + lungime_nume)) + 1;
-    // facem cast la tipul de informatie pe care vrem sa il citim, dupa sarim peste x pasi
     
-    // aici e baza + sizeof(head) = 8 + lungime la sir1 + 2 bytes ( 2 bancnote de 1 byte)
     printf("Nume : %s Parola : %s\n", (char *)(baza + 8), (char *)(baza + 8 + lungime_nume)); 
-    // prima bancnota se afla la baza + sizeof(head) = 8 + lungime primul sir
     printf("Cnp :%" PRId64 "\n", *(int64_t *)(baza + 8 + lungime_nume + lungime_parola));
-    // a doua se afla dupa prima + 1 byte
     printf("Vot :%" PRId8 "\n", *(int8_t *)(baza + 16 + lungime_nume + lungime_parola));
     printf("\n");
     
-    // crestem add cu dimensiunea unui struct de element
     lungime_finala = 8 + 9 + lungime_nume + lungime_parola;
     add = add + lungime_finala;
     
-    // verificare daca am ajuns pana la finalul vectorului
     if (add < len)
         baza = baza + lungime_finala;
     else
-        ok = 1; // iesire daca este cazul
+        ok = 1;
 
     }
 
-    baza = pointer; // baza ia adresa intiala pentru alta posibila afisare
+    baza = pointer;
 }
 
 void print_secret(void *baza, int len) {
-    // daca vectorul are lungimea 0 nu mai afisam nimic
     if (len == 0)
     return;
 
     void *pointer = baza;
-    int ok = 0; // variabila contor
+    int ok = 0;
     int lungime_finala = 0;
     int add = 0;
-    
-    // extragem tipul si dupa afisam informatia pana cand ajungem la len
+
     while (ok == 0) {
     printf("Varsta %d\n", *(int *)(baza));
     
@@ -199,50 +178,93 @@ void print_secret(void *baza, int len) {
 
     printf("Vot : [hidden]\n");
     
-    // crestem add cu dimensiunea unui struct de element
     lungime_finala = 8 + 9 + lungime_nume + lungime_parola;
     add = add + lungime_finala;
     
-    // verificare daca am ajuns pana la finalul vectorului
     if (add < len)
         baza = baza + lungime_finala;
     else
-        ok = 1; // iesire daca este cazul
+        ok = 1;
 
     }
 
-    baza = pointer; // baza ia adresa intiala pentru alta posibila afisare
+    baza = pointer;
 }
 
 
 // functie find
-void find(void *data_block, int len, int index) {
+void find(void *baza, int len, int index) {
     if (index < 0)
         return;
-    // salvare adresa initiala
-    void *pointer = data_block;
+
+    void *pointer = baza;
     int find = 0;
     
-    // parcurgere vector ( similar cu functiile de mai sus )
-    int lungime_data = *(int *)(data_block + 4);
+    int lungime_data = *(int *)(baza + 4);
     while (find != index)
     {
-        data_block = data_block + sizeof(info) + lungime_data;
-        lungime_data = *(int *)(data_block + 4);
+        baza = baza + sizeof(info) + lungime_data;
+        lungime_data = *(int *)(baza + 4);
         find++;
     }
     
-    // dupa ce am gasit indexul afisam ( similar cu functia print )
-    printf("Varsta %d\n", *(int *)(data_block));
+
+    printf("Varsta %d\n", *(int *)(baza));
 
 
-    int lungime = strlen((char *)(data_block + 8)) + 1;
-    printf("%s pentru %s\n", (char *)(data_block + 8), (char *)(data_block + 8 + lungime + 2));
-    printf("%" PRId8 "\n", *(int8_t *)(data_block + 8 + lungime));
-    printf("%" PRId8 "\n", *(int8_t *)(data_block + 9 + lungime));
+    int lungime_nume = strlen((char *)(baza + 8)) + 1;
+    int lungime_parola = strlen((char *)(baza + 8 + lungime_nume)) + 1;
+    printf("Nume : %s Parola : %s\n", (char *)(baza + 8), (char *)(baza + 8 + lungime_nume)); 
+    printf("Cnp :%" PRId64 "\n", *(int64_t *)(baza + 8 + lungime_nume + lungime_parola));
+    printf("Vot :%" PRId8 "\n", *(int8_t *)(baza + 16 + lungime_nume + lungime_parola));
     printf("\n");
 
-    data_block = pointer; // returnare adresa initiala
+    baza = pointer; // returnare adresa initiala
+}
+
+void log_in(void *baza, int len, int64_t cnp) {
+    if (len == 0)
+    return;
+
+    void *pointer = baza;
+    int ok = 0;
+    int lungime_finala = 0;
+    int add = 0;
+
+    int flag = 0;
+    
+    while (ok == 0) {
+
+    int lungime_nume = strlen((char *)(baza + 8)) + 1;
+    int lungime_parola = strlen((char *)(baza + 8 + lungime_nume)) + 1;
+
+    if(cnp == *(int64_t *)(baza + 8 + lungime_nume + lungime_parola)) {
+        flag = 1;
+        char password[256];
+        printf("Please %s, insert password\n", (char *)(baza + 8));
+        scanf("%s", password);
+        
+        if(strcmp(password, (char *)(baza + 8 + lungime_nume)) == 0)
+            printf("HEHE\n");
+    
+    }
+
+    
+    lungime_finala = 8 + 9 + lungime_nume + lungime_parola;
+    add = add + lungime_finala;
+    
+    if (add < len)
+        baza = baza + lungime_finala;
+    else
+        ok = 1;
+
+    }
+
+    if(flag == 0) {
+        printf("404 not found\n");
+    }
+
+    baza = pointer;
 }
 
 
@@ -251,7 +273,7 @@ int main() {
     // 
     void *baza = NULL;
     int len = 0;
-    int lungime_vector = 0;
+    int nr_useri = 0;
     
     // primire comanda
     char buffer[256];
@@ -264,17 +286,13 @@ int main() {
     {   // scanare buffer
         scanf("%s", buffer);
         
-        // comanda insert care creeaza un element, il aloca + scrie in el
-        if(strcmp(buffer, "insert") == 0) {
+        if(strcmp(buffer, "add") == 0) {
             data_structure *elem = (data_structure *)malloc(sizeof(data_structure));
-             // dupa ce scrie aloca in vectorul generic apeland o subfunctie din subprogram
-            write_data(&baza, elem, &len);
-            // crestem lungimea vectorului ( nu ca nr de bytes, ca nr de elem)
-            lungime_vector++;
+            add_a_user(&baza, elem, &len);
+            nr_useri++;
         }
 
         if(strcmp(buffer, "print") == 0) {
-            // apelam functia de printare
             print(baza,len);
         }
 
@@ -288,22 +306,22 @@ int main() {
             run = 0;
         }
 
-         if (strcmp(buffer, "find") == 0) {
+         if (strcmp(buffer, "log") == 0) {
             // scanam un index si apelam functia de gasire
-            int index;
-            scanf("%d", &index);
-            find(baza, len, index);
+            int64_t cnp;
+            scanf("%"SCNd64"", &cnp);
+            log_in(baza, len, cnp);
         }
 
-         if (strcmp(buffer, "delete_at") == 0) {
+         if (strcmp(buffer, "delete") == 0) {
             // scanam un index si apelam functia de stergere
             int index;
             scanf("%d", &index);
             // daca nu a mers stergerea iesim din program cu exit status -2
-            if (delete_at(&baza, &len, index) != 0)
+            if (delete_a_user(&baza, &len, index) != 0)
             exit(-2);
             // scadem lungimea vectorului
-            lungime_vector--;
+            nr_useri--;
         }
 
     } while ( run == 1 );
