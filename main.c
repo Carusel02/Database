@@ -168,11 +168,11 @@ void print_secret(void *baza, int len) {
     int lungime_parola = strlen((char *)(baza + 8 + lungime_nume)) + 1;
     
 
-    printf("Nume : %s Parola : ", (char *)(baza + 8)); 
+    printf("Nume : %s Parola : [", (char *)(baza + 8)); 
     for(int i = 0 ; i < lungime_parola - 1 ; i++) {
         printf("*");
     }
-    printf("\n");
+    printf("]\n");
 
     printf("Cnp : [hidden]\n");
 
@@ -189,37 +189,6 @@ void print_secret(void *baza, int len) {
     }
 
     baza = pointer;
-}
-
-
-// functie find
-void find(void *baza, int len, int index) {
-    if (index < 0)
-        return;
-
-    void *pointer = baza;
-    int find = 0;
-    
-    int lungime_data = *(int *)(baza + 4);
-    while (find != index)
-    {
-        baza = baza + sizeof(info) + lungime_data;
-        lungime_data = *(int *)(baza + 4);
-        find++;
-    }
-    
-
-    printf("Varsta %d\n", *(int *)(baza));
-
-
-    int lungime_nume = strlen((char *)(baza + 8)) + 1;
-    int lungime_parola = strlen((char *)(baza + 8 + lungime_nume)) + 1;
-    printf("Nume : %s Parola : %s\n", (char *)(baza + 8), (char *)(baza + 8 + lungime_nume)); 
-    printf("Cnp :%" PRId64 "\n", *(int64_t *)(baza + 8 + lungime_nume + lungime_parola));
-    printf("Vot :%" PRId8 "\n", *(int8_t *)(baza + 16 + lungime_nume + lungime_parola));
-    printf("\n");
-
-    baza = pointer; // returnare adresa initiala
 }
 
 void log_in(void *baza, int len, int64_t cnp) {
@@ -244,12 +213,18 @@ void log_in(void *baza, int len, int64_t cnp) {
         printf("Please %s, insert password\n", (char *)(baza + 8));
         scanf("%s", password);
         
-        if(strcmp(password, (char *)(baza + 8 + lungime_nume)) == 0)
-            printf("HEHE\n");
+        if(strcmp(password, (char *)(baza + 8 + lungime_nume)) == 0) {
+            printf("Now you can change vote [partid x = 0 partid y = 1]\n");
+            int8_t vot;
+            scanf("%"SCNd8"", &vot);
+            *(int8_t *)(baza + 8 + lungime_nume + lungime_parola + 8) = vot;       
+        
+        }
+        else
+            printf("incorrect password\n");
     
     }
 
-    
     lungime_finala = 8 + 9 + lungime_nume + lungime_parola;
     add = add + lungime_finala;
     
@@ -267,6 +242,50 @@ void log_in(void *baza, int len, int64_t cnp) {
     baza = pointer;
 }
 
+void number_vote(void *baza, int len) {
+    if (len == 0)
+    return;
+
+    void *pointer = baza;
+    int ok = 0;
+    int lungime_finala = 0;
+    int add = 0;
+
+    int partid_x = 0;
+    int partid_y = 0;
+
+    
+    while (ok == 0) {
+
+    int lungime_nume = strlen((char *)(baza + 8)) + 1;
+    int lungime_parola = strlen((char *)(baza + 8 + lungime_nume)) + 1;
+
+    if(*(int8_t *)(baza + 8 + lungime_nume + lungime_parola + 8) == 0) {
+        if(*(int *)(baza) > 17) {
+        partid_x++;
+        }
+    else
+        if(*(int *)(baza) > 17)
+        partid_y++;
+    
+    }
+
+    
+    lungime_finala = 8 + 9 + lungime_nume + lungime_parola;
+    add = add + lungime_finala;
+    
+    if (add < len)
+        baza = baza + lungime_finala;
+    else
+        ok = 1;
+
+    }
+
+    printf("Partidul x are = %d voturi valide\n", partid_x);
+    printf("Partidul y are = %d voturi valide\n", partid_y);
+
+    baza = pointer;
+}
 
 
 int main() {
@@ -297,40 +316,33 @@ int main() {
         }
 
         if(strcmp(buffer, "confidential") == 0) {
-            // apelam functia de printare
             print_secret(baza,len);
         }
 
         if(strcmp(buffer, "exit") == 0) {
-            // oprim programul din a mai rula
             run = 0;
         }
 
          if (strcmp(buffer, "log") == 0) {
-            // scanam un index si apelam functia de gasire
             int64_t cnp;
             scanf("%"SCNd64"", &cnp);
             log_in(baza, len, cnp);
         }
 
+        if (strcmp(buffer, "result") == 0) {
+            number_vote(baza, len);
+        }
+
          if (strcmp(buffer, "delete") == 0) {
-            // scanam un index si apelam functia de stergere
             int index;
             scanf("%d", &index);
-            // daca nu a mers stergerea iesim din program cu exit status -2
             if (delete_a_user(&baza, &len, index) != 0)
             exit(-2);
-            // scadem lungimea vectorului
             nr_useri--;
         }
 
     } while ( run == 1 );
     
-    // free la vectorul generic
     free(baza);
-
-
-
-
     return 0;
 }
